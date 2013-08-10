@@ -1,0 +1,1034 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m4
+   3              		.eabi_attribute 27, 3
+   4              		.fpu fpv4-sp-d16
+   5              		.eabi_attribute 20, 1
+   6              		.eabi_attribute 21, 1
+   7              		.eabi_attribute 23, 3
+   8              		.eabi_attribute 24, 1
+   9              		.eabi_attribute 25, 1
+  10              		.eabi_attribute 26, 1
+  11              		.eabi_attribute 30, 2
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.file	"syscalls.c"
+  15              		.text
+  16              	.Ltext0:
+  17              		.cfi_sections	.debug_frame
+  18              		.section	.text._read_r,"ax",%progbits
+  19              		.align	2
+  20              		.global	_read_r
+  21              		.thumb
+  22              		.thumb_func
+  24              	_read_r:
+  25              	.LFB112:
+  26              		.file 1 "src/syscalls.c"
+   1:src/syscalls.c **** #include <stdlib.h>
+   2:src/syscalls.c **** #include <string.h>
+   3:src/syscalls.c **** #include <stdbool.h>
+   4:src/syscalls.c **** #include <reent.h>
+   5:src/syscalls.c **** #include <errno.h>
+   6:src/syscalls.c **** #include <sys/stat.h>
+   7:src/syscalls.c **** #include <sys/types.h>
+   8:src/syscalls.c **** 
+   9:src/syscalls.c **** #include "syscalls_if.h"
+  10:src/syscalls.c **** 
+  11:src/syscalls.c **** _ssize_t _read_r(struct _reent *r, int file, void *ptr, size_t len)
+  12:src/syscalls.c **** {
+  27              		.loc 1 12 0
+  28              		.cfi_startproc
+  29              		@ args = 0, pretend = 0, frame = 0
+  30              		@ frame_needed = 0, uses_anonymous_args = 0
+  31              	.LVL0:
+  32 0000 2DE9F041 		push	{r4, r5, r6, r7, r8, lr}
+  33              	.LCFI0:
+  34              		.cfi_def_cfa_offset 24
+  35              		.cfi_offset 14, -4
+  36              		.cfi_offset 8, -8
+  37              		.cfi_offset 7, -12
+  38              		.cfi_offset 6, -16
+  39              		.cfi_offset 5, -20
+  40              		.cfi_offset 4, -24
+  41              		.loc 1 12 0
+  42 0004 1C46     		mov	r4, r3
+  43              	.LVL1:
+  13:src/syscalls.c ****   char c;
+  14:src/syscalls.c ****   int  i;
+  15:src/syscalls.c ****   unsigned char *p;
+  16:src/syscalls.c **** 
+  17:src/syscalls.c ****   p = (unsigned char*)ptr;
+  18:src/syscalls.c ****   for (i = 0; i < len; i++)
+  44              		.loc 1 18 0
+  45 0006 1D46     		mov	r5, r3
+  46 0008 CBB1     		cbz	r3, .L2
+  47 000a 0027     		movs	r7, #0
+  17:src/syscalls.c ****   p = (unsigned char*)ptr;
+  48              		.loc 1 17 0
+  49 000c 1646     		mov	r6, r2
+  50              		.loc 1 18 0
+  51 000e 3D46     		mov	r5, r7
+  19:src/syscalls.c ****   {
+  20:src/syscalls.c **** 	do{		
+  21:src/syscalls.c **** 		c = getch();
+  22:src/syscalls.c **** 	}while(c == false);
+  23:src/syscalls.c **** 	
+  24:src/syscalls.c ****     *p++ = c;
+  25:src/syscalls.c **** 	#ifdef ECHOBACK 
+  26:src/syscalls.c **** 		putch(c);
+  27:src/syscalls.c **** 	#endif
+  28:src/syscalls.c **** 	
+  29:src/syscalls.c ****     if (c == '\r' && i <= (len - 2)) /* 0x0D */
+  52              		.loc 1 29 0
+  53 0010 A3F10208 		sub	r8, r3, #2
+  54              	.LVL2:
+  55              	.L10:
+  21:src/syscalls.c **** 		c = getch();
+  56              		.loc 1 21 0 discriminator 1
+  57 0014 FFF7FEFF 		bl	getch
+  58 0018 C3B2     		uxtb	r3, r0
+  59              	.LVL3:
+  22:src/syscalls.c **** 	}while(c == false);
+  60              		.loc 1 22 0 discriminator 1
+  61 001a 002B     		cmp	r3, #0
+  62 001c FAD0     		beq	.L10
+  24:src/syscalls.c ****     *p++ = c;
+  63              		.loc 1 24 0
+  64 001e 3246     		mov	r2, r6
+  65 0020 02F8010B 		strb	r0, [r2], #1
+  66              	.LVL4:
+  67              		.loc 1 29 0
+  68 0024 0D2B     		cmp	r3, #13
+  69 0026 05D0     		beq	.L12
+  70              	.L4:
+  18:src/syscalls.c ****   for (i = 0; i < len; i++)
+  71              		.loc 1 18 0
+  72 0028 0135     		adds	r5, r5, #1
+  73              	.LVL5:
+  74 002a 2F46     		mov	r7, r5
+  75 002c A542     		cmp	r5, r4
+  76 002e 06D0     		beq	.L2
+  24:src/syscalls.c ****     *p++ = c;
+  77              		.loc 1 24 0
+  78 0030 1646     		mov	r6, r2
+  79 0032 EFE7     		b	.L10
+  80              	.LVL6:
+  81              	.L12:
+  82              		.loc 1 29 0 discriminator 1
+  83 0034 B845     		cmp	r8, r7
+  84 0036 F7D3     		bcc	.L4
+  30:src/syscalls.c ****     {
+  31:src/syscalls.c ****       *p = '\n';					 /* 0x0A */
+  85              		.loc 1 31 0
+  86 0038 0A23     		movs	r3, #10
+  87              	.LVL7:
+  88 003a 7370     		strb	r3, [r6, #1]
+  32:src/syscalls.c **** 	  #ifdef ECHOBACK 
+  33:src/syscalls.c **** 		putch('\n');				 /* 0x0A */
+  34:src/syscalls.c **** 	  #endif
+  35:src/syscalls.c ****       return i + 2;
+  89              		.loc 1 35 0
+  90 003c 0235     		adds	r5, r5, #2
+  91              	.L2:
+  36:src/syscalls.c ****     }
+  37:src/syscalls.c ****   }
+  38:src/syscalls.c ****   return i;
+  39:src/syscalls.c **** }
+  92              		.loc 1 39 0
+  93 003e 2846     		mov	r0, r5
+  94 0040 BDE8F081 		pop	{r4, r5, r6, r7, r8, pc}
+  95              		.cfi_endproc
+  96              	.LFE112:
+  98              		.section	.text._write_r,"ax",%progbits
+  99              		.align	2
+ 100              		.global	_write_r
+ 101              		.thumb
+ 102              		.thumb_func
+ 104              	_write_r:
+ 105              	.LFB113:
+  40:src/syscalls.c **** 
+  41:src/syscalls.c **** _ssize_t _write_r (
+  42:src/syscalls.c ****     struct _reent *r, 
+  43:src/syscalls.c ****     int file, 
+  44:src/syscalls.c ****     const void *ptr, 
+  45:src/syscalls.c ****     size_t len)
+  46:src/syscalls.c **** {
+ 106              		.loc 1 46 0
+ 107              		.cfi_startproc
+ 108              		@ args = 0, pretend = 0, frame = 0
+ 109              		@ frame_needed = 0, uses_anonymous_args = 0
+ 110              	.LVL8:
+ 111 0000 70B5     		push	{r4, r5, r6, lr}
+ 112              	.LCFI1:
+ 113              		.cfi_def_cfa_offset 16
+ 114              		.cfi_offset 14, -4
+ 115              		.cfi_offset 6, -8
+ 116              		.cfi_offset 5, -12
+ 117              		.cfi_offset 4, -16
+ 118              		.loc 1 46 0
+ 119 0002 1C46     		mov	r4, r3
+ 120              	.LVL9:
+  47:src/syscalls.c **** 	int i;
+  48:src/syscalls.c **** 	const unsigned char *p;
+  49:src/syscalls.c **** 	
+  50:src/syscalls.c **** 	p = (const unsigned char*) ptr;
+  51:src/syscalls.c **** 	
+  52:src/syscalls.c **** 	for (i = 0; i < len; i++) {
+ 121              		.loc 1 52 0
+ 122 0004 9BB1     		cbz	r3, .L14
+ 123 0006 1546     		mov	r5, r2
+ 124              		.file 2 "/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h"
+   1:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** /* This header file provides the reentrancy.  */
+   2:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** 
+   3:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** /* The reentrant system calls here serve two purposes:
+   4:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** 
+   5:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    1) Provide reentrant versions of the system calls the ANSI C library
+   6:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****       requires.
+   7:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    2) Provide these system calls in a namespace clean way.
+   8:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** 
+   9:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    It is intended that *all* system calls that the ANSI C library needs
+  10:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    be declared here.  It documents them all in one place.  All library access
+  11:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    to the system is via some form of these functions.
+  12:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** 
+  13:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    The target may provide the needed syscalls by any of the following:
+  14:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** 
+  15:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    1) Define the reentrant versions of the syscalls directly.
+  16:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****       (eg: _open_r, _close_r, etc.).  Please keep the namespace clean.
+  17:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****       When you do this, set "syscall_dir" to "syscalls" and add
+  18:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****       -DREENTRANT_SYSCALLS_PROVIDED to newlib_cflags in configure.host.
+  19:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** 
+  20:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    2) Define namespace clean versions of the system calls by prefixing
+  21:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****       them with '_' (eg: _open, _close, etc.).  Technically, there won't be
+  22:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****       true reentrancy at the syscall level, but the library will be namespace
+  23:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****       clean.
+  24:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****       When you do this, set "syscall_dir" to "syscalls" in configure.host.
+  25:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** 
+  26:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    3) Define or otherwise provide the regular versions of the syscalls
+  27:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****       (eg: open, close, etc.).  The library won't be reentrant nor namespace
+  28:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****       clean, but at least it will work.
+  29:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****       When you do this, add -DMISSING_SYSCALL_NAMES to newlib_cflags in
+  30:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****       configure.host.
+  31:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** 
+  32:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    4) Define or otherwise provide the regular versions of the syscalls,
+  33:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****       and do not supply functional interfaces for any of the reentrant
+  34:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****       calls. With this method, the reentrant syscalls are redefined to
+  35:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****       directly call the regular system call without the reentrancy argument.
+  36:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****       When you do this, specify both -DREENTRANT_SYSCALLS_PROVIDED and 
+  37:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****       -DMISSING_SYSCALL_NAMES via newlib_cflags in configure.host and do
+  38:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****       not specify "syscall_dir".
+  39:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** 
+  40:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    Stubs of the reentrant versions of the syscalls exist in the libc/reent
+  41:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    source directory and are provided if REENTRANT_SYSCALLS_PROVIDED isn't 
+  42:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    defined.  These stubs call the native system calls: _open, _close, etc. 
+  43:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    if MISSING_SYSCALL_NAMES is *not* defined, otherwise they call the
+  44:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    non-underscored versions: open, close, etc. when MISSING_SYSCALL_NAMES
+  45:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    *is* defined.
+  46:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** 
+  47:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    By default, newlib functions call the reentrant syscalls internally,
+  48:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    passing a reentrancy structure as an argument.  This reentrancy structure
+  49:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    contains data that is thread-specific.  For example, the errno value is
+  50:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    kept in the reentrancy structure.  If multiple threads exist, each will
+  51:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    keep a separate errno value which is intuitive since the application flow
+  52:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    cannot check for failure reliably otherwise.
+  53:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** 
+  54:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    The reentrant syscalls are either provided by the platform, by the 
+  55:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    libc/reent stubs, or in the case of both MISSING_SYSCALL_NAMES and 
+  56:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    REENTRANT_SYSCALLS_PROVIDED being defined, the calls are redefined to
+  57:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    simply call the regular syscalls with no reentrancy struct argument.
+  58:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** 
+  59:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    A single-threaded application does not need to worry about the reentrancy
+  60:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    structure.  It is used internally.  
+  61:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** 
+  62:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    A multi-threaded application needs either to manually manage reentrancy 
+  63:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    structures or use dynamic reentrancy.
+  64:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    
+  65:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    Manually managing reentrancy structures entails calling special reentrant
+  66:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    versions of newlib functions that have an additional reentrancy argument.
+  67:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    For example, _printf_r.  By convention, the first argument is the
+  68:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    reentrancy structure.  By default, the normal version of the function
+  69:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    uses the default reentrancy structure: _REENT.  The reentrancy structure
+  70:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    is passed internally, eventually to the reentrant syscalls themselves.
+  71:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    How the structures are stored and accessed in this model is up to the
+  72:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    application.
+  73:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** 
+  74:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    Dynamic reentrancy is specified by the __DYNAMIC_REENT__ flag.  This
+  75:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    flag denotes setting up a macro to replace _REENT with a function call
+  76:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    to __getreent().  This function needs to be implemented by the platform
+  77:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    and it is meant to return the reentrancy structure for the current
+  78:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    thread.  When the regular C functions (e.g. printf) go to call internal
+  79:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    routines with the default _REENT structure, they end up calling with 
+  80:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    the reentrancy structure for the thread.  Thus, application code does not
+  81:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    need to call the _r routines nor worry about reentrancy structures.  */
+  82:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** 
+  83:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** /* WARNING: All identifiers here must begin with an underscore.  This file is
+  84:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    included by stdio.h and others and we therefore must only use identifiers
+  85:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h ****    in the namespace allotted to us.  */
+  86:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** 
+  87:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #ifndef _REENT_H_
+  88:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #ifdef __cplusplus
+  89:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** extern "C" {
+  90:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #endif
+  91:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #define _REENT_H_
+  92:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** 
+  93:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #include <sys/reent.h>
+  94:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #include <sys/_types.h>
+  95:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #include <machine/types.h>
+  96:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** 
+  97:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #define __need_size_t
+  98:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #define __need_ptrdiff_t
+  99:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #include <stddef.h>
+ 100:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** 
+ 101:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** /* FIXME: not namespace clean */
+ 102:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** struct stat;
+ 103:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** struct tms;
+ 104:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** struct timeval;
+ 105:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** struct timezone;
+ 106:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** 
+ 107:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #if defined(REENTRANT_SYSCALLS_PROVIDED) && defined(MISSING_SYSCALL_NAMES)
+ 108:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** 
+ 109:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #define _close_r(__reent, __fd)                   close(__fd)
+ 110:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #define _execve_r(__reent, __f, __arg, __env)     execve(__f, __arg, __env)
+ 111:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #define _fcntl_r(__reent, __fd, __cmd, __arg)     fcntl(__fd, __cmd, __arg)
+ 112:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #define _fork_r(__reent)                          fork()
+ 113:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #define _fstat_r(__reent, __fdes, __stat)         fstat(__fdes, __stat)
+ 114:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #define _getpid_r(__reent)                        getpid()
+ 115:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #define _isatty_r(__reent, __desc)                isatty(__desc)
+ 116:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #define _kill_r(__reent, __pid, __signal)         kill(__pid, __signal)
+ 117:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #define _link_r(__reent, __oldpath, __newpath)    link(__oldpath, __newpath)
+ 118:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #define _lseek_r(__reent, __fdes, __off, __w)     lseek(__fdes, __off, __w)
+ 119:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #define _mkdir_r(__reent, __path, __m)		  mkdir(__path, __m)
+ 120:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #define _open_r(__reent, __path, __flag, __m)     open(__path, __flag, __m)
+ 121:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #define _read_r(__reent, __fd, __buff, __cnt)     read(__fd, __buff, __cnt)
+ 122:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #define _rename_r(__reent, __old, __new)	  rename(__old, __new)
+ 123:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #define _sbrk_r(__reent, __incr)                  sbrk(__incr)
+ 124:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #define _stat_r(__reent, __path, __buff)          stat(__path, __buff)
+ 125:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #define _times_r(__reent, __time)                 times(__time)
+ 126:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #define _unlink_r(__reent, __path)                unlink(__path)
+ 127:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #define _wait_r(__reent, __status)                wait(__status)
+ 128:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #define _write_r(__reent, __fd, __buff, __cnt)    write(__fd, __buff, __cnt)
+ 129:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #define _gettimeofday_r(__reent, __tp, __tzp)     gettimeofday(__tp, __tzp)
+ 130:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** 
+ 131:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #ifdef __LARGE64_FILES
+ 132:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #define _lseek64_r(__reent, __fd, __off, __w)     lseek64(__fd, __off, __w)
+ 133:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #define _fstat64_r(__reent, __fd, __buff)         fstat64(__fd, __buff)
+ 134:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #define _open64_r(__reent, __path, __flag, __m)   open64(__path, __flag, __m)
+ 135:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #endif
+ 136:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** 
+ 137:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** #else
+ 138:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** /* Reentrant versions of system calls.  */
+ 139:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** 
+ 140:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** extern int _close_r _PARAMS ((struct _reent *, int));
+ 141:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** extern int _execve_r _PARAMS ((struct _reent *, const char *, char *const *, char *const *));
+ 142:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** extern int _fcntl_r _PARAMS ((struct _reent *, int, int, int));
+ 143:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** extern int _fork_r _PARAMS ((struct _reent *));
+ 144:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** extern int _fstat_r _PARAMS ((struct _reent *, int, struct stat *));
+ 145:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** extern int _getpid_r _PARAMS ((struct _reent *));
+ 146:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** extern int _isatty_r _PARAMS ((struct _reent *, int));
+ 147:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** extern int _kill_r _PARAMS ((struct _reent *, int, int));
+ 148:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** extern int _link_r _PARAMS ((struct _reent *, const char *, const char *));
+ 149:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** extern _off_t _lseek_r _PARAMS ((struct _reent *, int, _off_t, int));
+ 150:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** extern int _mkdir_r _PARAMS ((struct _reent *, const char *, int));
+ 151:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** extern int _open_r _PARAMS ((struct _reent *, const char *, int, int));
+ 152:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** extern _ssize_t _read_r _PARAMS ((struct _reent *, int, void *, size_t));
+ 153:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** extern int _rename_r _PARAMS ((struct _reent *, const char *, const char *));
+ 154:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** extern void *_sbrk_r _PARAMS ((struct _reent *, ptrdiff_t));
+ 155:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** extern int _stat_r _PARAMS ((struct _reent *, const char *, struct stat *));
+ 156:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** extern _CLOCK_T_ _times_r _PARAMS ((struct _reent *, struct tms *));
+ 157:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** extern int _unlink_r _PARAMS ((struct _reent *, const char *));
+ 158:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** extern int _wait_r _PARAMS ((struct _reent *, int *));
+ 159:/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/reent.h **** extern _ssize_t _write_r _PARAMS ((struct _reent *, int, const void *, size_t));
+ 125              		.loc 2 159 0
+ 126 0008 D618     		adds	r6, r2, r3
+ 127 000a 03E0     		b	.L16
+ 128              	.LVL10:
+ 129              	.L15:
+ 130              	.LBB2:
+  53:src/syscalls.c **** 		if (*p == '\n' ) putch('\r');
+  54:src/syscalls.c **** 		putch(*p++);
+ 131              		.loc 1 54 0
+ 132 000c FFF7FEFF 		bl	glcd_putch
+ 133              	.LBE2:
+  52:src/syscalls.c **** 	for (i = 0; i < len; i++) {
+ 134              		.loc 1 52 0
+ 135 0010 B542     		cmp	r5, r6
+ 136 0012 0CD0     		beq	.L14
+ 137              	.L16:
+ 138              	.LBB4:
+  53:src/syscalls.c **** 		if (*p == '\n' ) putch('\r');
+ 139              		.loc 1 53 0
+ 140 0014 15F8010B 		ldrb	r0, [r5], #1	@ zero_extendqisi2
+ 141 0018 0A28     		cmp	r0, #10
+ 142 001a F7D1     		bne	.L15
+ 143              	.LBB3:
+  53:src/syscalls.c **** 		if (*p == '\n' ) putch('\r');
+ 144              		.loc 1 53 0 is_stmt 0 discriminator 1
+ 145 001c 0D20     		movs	r0, #13
+ 146 001e FFF7FEFF 		bl	glcd_putch
+ 147 0022 15F8010C 		ldrb	r0, [r5, #-1]	@ zero_extendqisi2
+ 148              	.LBE3:
+ 149              		.loc 1 54 0 is_stmt 1 discriminator 1
+ 150 0026 FFF7FEFF 		bl	glcd_putch
+ 151              	.LBE4:
+  52:src/syscalls.c **** 	for (i = 0; i < len; i++) {
+ 152              		.loc 1 52 0 discriminator 1
+ 153 002a B542     		cmp	r5, r6
+ 154 002c F2D1     		bne	.L16
+ 155              	.L14:
+  55:src/syscalls.c **** 	}
+  56:src/syscalls.c **** 	
+  57:src/syscalls.c **** 	return len;
+  58:src/syscalls.c **** }
+ 156              		.loc 1 58 0
+ 157 002e 2046     		mov	r0, r4
+ 158 0030 70BD     		pop	{r4, r5, r6, pc}
+ 159              		.cfi_endproc
+ 160              	.LFE113:
+ 162 0032 00BF     		.section	.text._close_r,"ax",%progbits
+ 163              		.align	2
+ 164              		.global	_close_r
+ 165              		.thumb
+ 166              		.thumb_func
+ 168              	_close_r:
+ 169              	.LFB114:
+  59:src/syscalls.c **** 
+  60:src/syscalls.c **** int _close_r(
+  61:src/syscalls.c ****     struct _reent *r, 
+  62:src/syscalls.c ****     int file)
+  63:src/syscalls.c **** {
+ 170              		.loc 1 63 0
+ 171              		.cfi_startproc
+ 172              		@ args = 0, pretend = 0, frame = 0
+ 173              		@ frame_needed = 0, uses_anonymous_args = 0
+ 174              		@ link register save eliminated.
+ 175              	.LVL11:
+  64:src/syscalls.c **** 	return 0;
+  65:src/syscalls.c **** }
+ 176              		.loc 1 65 0
+ 177 0000 0020     		movs	r0, #0
+ 178              	.LVL12:
+ 179 0002 7047     		bx	lr
+ 180              		.cfi_endproc
+ 181              	.LFE114:
+ 183              		.section	.text._lseek_r,"ax",%progbits
+ 184              		.align	2
+ 185              		.global	_lseek_r
+ 186              		.thumb
+ 187              		.thumb_func
+ 189              	_lseek_r:
+ 190              	.LFB115:
+  66:src/syscalls.c **** 
+  67:src/syscalls.c **** _off_t _lseek_r(
+  68:src/syscalls.c ****     struct _reent *r, 
+  69:src/syscalls.c ****     int file, 
+  70:src/syscalls.c ****     _off_t ptr, 
+  71:src/syscalls.c ****     int dir)
+  72:src/syscalls.c **** {
+ 191              		.loc 1 72 0
+ 192              		.cfi_startproc
+ 193              		@ args = 0, pretend = 0, frame = 0
+ 194              		@ frame_needed = 0, uses_anonymous_args = 0
+ 195              		@ link register save eliminated.
+ 196              	.LVL13:
+  73:src/syscalls.c **** 	return (_off_t)0;	/*  Always indicate we are at file beginning.	*/
+  74:src/syscalls.c **** }
+ 197              		.loc 1 74 0
+ 198 0000 0020     		movs	r0, #0
+ 199              	.LVL14:
+ 200 0002 7047     		bx	lr
+ 201              		.cfi_endproc
+ 202              	.LFE115:
+ 204              		.section	.text._fstat_r,"ax",%progbits
+ 205              		.align	2
+ 206              		.global	_fstat_r
+ 207              		.thumb
+ 208              		.thumb_func
+ 210              	_fstat_r:
+ 211              	.LFB116:
+  75:src/syscalls.c **** 
+  76:src/syscalls.c **** 
+  77:src/syscalls.c **** int _fstat_r(
+  78:src/syscalls.c ****     struct _reent *r, 
+  79:src/syscalls.c ****     int file, 
+  80:src/syscalls.c ****     struct stat *st)
+  81:src/syscalls.c **** {
+ 212              		.loc 1 81 0
+ 213              		.cfi_startproc
+ 214              		@ args = 0, pretend = 0, frame = 0
+ 215              		@ frame_needed = 0, uses_anonymous_args = 0
+ 216              		@ link register save eliminated.
+ 217              	.LVL15:
+  82:src/syscalls.c **** 	/*  Always set as character device.				*/
+  83:src/syscalls.c **** 	st->st_mode = S_IFCHR;	
+ 218              		.loc 1 83 0
+ 219 0000 4FF40053 		mov	r3, #8192
+ 220 0004 5360     		str	r3, [r2, #4]
+  84:src/syscalls.c **** 		/* assigned to strong type with implicit 	*/
+  85:src/syscalls.c **** 		/* signed/unsigned conversion.  Required by 	*/
+  86:src/syscalls.c **** 		/* newlib.					*/
+  87:src/syscalls.c **** 
+  88:src/syscalls.c **** 	return 0;
+  89:src/syscalls.c **** }
+ 221              		.loc 1 89 0
+ 222 0006 0020     		movs	r0, #0
+ 223              	.LVL16:
+ 224 0008 7047     		bx	lr
+ 225              		.cfi_endproc
+ 226              	.LFE116:
+ 228              		.section	.text.isatty,"ax",%progbits
+ 229              		.align	2
+ 230              		.global	isatty
+ 231              		.thumb
+ 232              		.thumb_func
+ 234              	isatty:
+ 235              	.LFB117:
+  90:src/syscalls.c **** 
+  91:src/syscalls.c **** #ifdef __GNUC__
+  92:src/syscalls.c **** int isatty(int file); /* avoid warning */
+  93:src/syscalls.c **** #endif
+  94:src/syscalls.c **** int isatty(int file)
+  95:src/syscalls.c **** {
+ 236              		.loc 1 95 0
+ 237              		.cfi_startproc
+ 238              		@ args = 0, pretend = 0, frame = 0
+ 239              		@ frame_needed = 0, uses_anonymous_args = 0
+ 240              		@ link register save eliminated.
+ 241              	.LVL17:
+  96:src/syscalls.c **** 	return 1;
+  97:src/syscalls.c **** }
+ 242              		.loc 1 97 0
+ 243 0000 0120     		movs	r0, #1
+ 244              	.LVL18:
+ 245 0002 7047     		bx	lr
+ 246              		.cfi_endproc
+ 247              	.LFE117:
+ 249              		.section	.text._exit,"ax",%progbits
+ 250              		.align	2
+ 251              		.global	_exit
+ 252              		.thumb
+ 253              		.thumb_func
+ 255              	_exit:
+ 256              	.LFB118:
+  98:src/syscalls.c **** 
+  99:src/syscalls.c **** 
+ 100:src/syscalls.c **** void _exit(int n) {
+ 257              		.loc 1 100 0
+ 258              		.cfi_startproc
+ 259              		@ Volatile: function does not return.
+ 260              		@ args = 0, pretend = 0, frame = 0
+ 261              		@ frame_needed = 0, uses_anonymous_args = 0
+ 262              		@ link register save eliminated.
+ 263              	.L23:
+ 264              	.LVL19:
+ 265              	.L24:
+ 266 0000 FEE7     		b	.L24
+ 267              		.cfi_endproc
+ 268              	.LFE118:
+ 270 0002 00BF     		.section	.text._getpid,"ax",%progbits
+ 271              		.align	2
+ 272              		.global	_getpid
+ 273              		.thumb
+ 274              		.thumb_func
+ 276              	_getpid:
+ 277              	.LFB119:
+ 101:src/syscalls.c **** label:  goto label; /* endless loop */
+ 102:src/syscalls.c **** }
+ 103:src/syscalls.c **** 
+ 104:src/syscalls.c **** int _getpid(int file)
+ 105:src/syscalls.c **** {
+ 278              		.loc 1 105 0
+ 279              		.cfi_startproc
+ 280              		@ args = 0, pretend = 0, frame = 0
+ 281              		@ frame_needed = 0, uses_anonymous_args = 0
+ 282              		@ link register save eliminated.
+ 283              	.LVL20:
+ 284              		.loc 1 105 0
+ 106:src/syscalls.c **** 	return 1;
+ 107:src/syscalls.c **** }
+ 285              		.loc 1 107 0
+ 286 0000 0120     		movs	r0, #1
+ 287              	.LVL21:
+ 288 0002 7047     		bx	lr
+ 289              		.cfi_endproc
+ 290              	.LFE119:
+ 292              		.section	.text._kill,"ax",%progbits
+ 293              		.align	2
+ 294              		.global	_kill
+ 295              		.thumb
+ 296              		.thumb_func
+ 298              	_kill:
+ 299              	.LFB120:
+ 108:src/syscalls.c **** 
+ 109:src/syscalls.c **** int _kill(int file)
+ 110:src/syscalls.c **** {
+ 300              		.loc 1 110 0
+ 301              		.cfi_startproc
+ 302              		@ args = 0, pretend = 0, frame = 0
+ 303              		@ frame_needed = 0, uses_anonymous_args = 0
+ 304              		@ link register save eliminated.
+ 305              	.LVL22:
+ 111:src/syscalls.c **** 	return 1;
+ 112:src/syscalls.c **** }
+ 306              		.loc 1 112 0
+ 307 0000 0120     		movs	r0, #1
+ 308              	.LVL23:
+ 309 0002 7047     		bx	lr
+ 310              		.cfi_endproc
+ 311              	.LFE120:
+ 313              		.section	.text._sbrk_r,"ax",%progbits
+ 314              		.align	2
+ 315              		.global	_sbrk_r
+ 316              		.thumb
+ 317              		.thumb_func
+ 319              	_sbrk_r:
+ 320              	.LFB121:
+ 113:src/syscalls.c **** 
+ 114:src/syscalls.c **** extern char end[];
+ 115:src/syscalls.c **** extern char _heap_end[];
+ 116:src/syscalls.c **** static char *heap_ptr;
+ 117:src/syscalls.c **** void * _sbrk_r(
+ 118:src/syscalls.c ****     struct _reent *_s_r, 
+ 119:src/syscalls.c ****     ptrdiff_t nbytes)
+ 120:src/syscalls.c **** {
+ 321              		.loc 1 120 0
+ 322              		.cfi_startproc
+ 323              		@ args = 0, pretend = 0, frame = 0
+ 324              		@ frame_needed = 0, uses_anonymous_args = 0
+ 325              	.LVL24:
+ 326 0000 08B5     		push	{r3, lr}
+ 327              	.LCFI2:
+ 328              		.cfi_def_cfa_offset 8
+ 329              		.cfi_offset 14, -4
+ 330              		.cfi_offset 3, -8
+ 121:src/syscalls.c **** 	char  *base;
+ 122:src/syscalls.c **** 	if (!heap_ptr) {
+ 331              		.loc 1 122 0
+ 332 0002 094B     		ldr	r3, .L33
+ 333 0004 1868     		ldr	r0, [r3, #0]
+ 334              	.LVL25:
+ 335 0006 60B1     		cbz	r0, .L31
+ 336              	.L28:
+ 337              	.LVL26:
+ 123:src/syscalls.c **** 		heap_ptr = end;
+ 124:src/syscalls.c **** 	}
+ 125:src/syscalls.c **** 	base = heap_ptr;
+ 126:src/syscalls.c **** 	if (heap_ptr + nbytes > _heap_end)
+ 338              		.loc 1 126 0
+ 339 0008 4118     		adds	r1, r0, r1
+ 340              	.LVL27:
+ 341 000a 084A     		ldr	r2, .L33+4
+ 342 000c 9142     		cmp	r1, r2
+ 343 000e 01D8     		bhi	.L32
+ 127:src/syscalls.c **** 	{
+ 128:src/syscalls.c **** 			errno = ENOMEM;
+ 129:src/syscalls.c **** 			return (caddr_t) -1;
+ 130:src/syscalls.c **** 	}
+ 131:src/syscalls.c **** 	heap_ptr += nbytes;
+ 344              		.loc 1 131 0
+ 345 0010 1960     		str	r1, [r3, #0]
+ 132:src/syscalls.c **** 	return base;
+ 133:src/syscalls.c **** }
+ 346              		.loc 1 133 0
+ 347 0012 08BD     		pop	{r3, pc}
+ 348              	.L32:
+ 128:src/syscalls.c **** 			errno = ENOMEM;
+ 349              		.loc 1 128 0
+ 350 0014 FFF7FEFF 		bl	__errno
+ 351              	.LVL28:
+ 352 0018 0C23     		movs	r3, #12
+ 353 001a 0360     		str	r3, [r0, #0]
+ 129:src/syscalls.c **** 			return (caddr_t) -1;
+ 354              		.loc 1 129 0
+ 355 001c 4FF0FF30 		mov	r0, #-1
+ 356 0020 08BD     		pop	{r3, pc}
+ 357              	.LVL29:
+ 358              	.L31:
+ 123:src/syscalls.c **** 		heap_ptr = end;
+ 359              		.loc 1 123 0
+ 360 0022 0348     		ldr	r0, .L33+8
+ 361 0024 1860     		str	r0, [r3, #0]
+ 362 0026 EFE7     		b	.L28
+ 363              	.L34:
+ 364              		.align	2
+ 365              	.L33:
+ 366 0028 00000000 		.word	.LANCHOR0
+ 367 002c 00000000 		.word	_heap_end
+ 368 0030 00000000 		.word	end
+ 369              		.cfi_endproc
+ 370              	.LFE121:
+ 372              		.section	.text._sbrk,"ax",%progbits
+ 373              		.align	2
+ 374              		.global	_sbrk
+ 375              		.thumb
+ 376              		.thumb_func
+ 378              	_sbrk:
+ 379              	.LFB122:
+ 134:src/syscalls.c **** 
+ 135:src/syscalls.c **** 
+ 136:src/syscalls.c **** 
+ 137:src/syscalls.c **** void * _sbrk(ptrdiff_t incr)
+ 138:src/syscalls.c **** {
+ 380              		.loc 1 138 0
+ 381              		.cfi_startproc
+ 382              		@ args = 0, pretend = 0, frame = 0
+ 383              		@ frame_needed = 0, uses_anonymous_args = 0
+ 384              	.LVL30:
+ 385 0000 08B5     		push	{r3, lr}
+ 386              	.LCFI3:
+ 387              		.cfi_def_cfa_offset 8
+ 388              		.cfi_offset 14, -4
+ 389              		.cfi_offset 3, -8
+ 139:src/syscalls.c ****   char  *base;
+ 140:src/syscalls.c ****   if (!heap_ptr) heap_ptr = end;
+ 390              		.loc 1 140 0
+ 391 0002 0B4A     		ldr	r2, .L41
+ 392 0004 1368     		ldr	r3, [r2, #0]
+ 393 0006 7BB1     		cbz	r3, .L39
+ 394              	.L36:
+ 395              	.LVL31:
+ 141:src/syscalls.c ****   base = heap_ptr;
+ 142:src/syscalls.c **** 	if (heap_ptr + incr > _heap_end)
+ 396              		.loc 1 142 0
+ 397 0008 1818     		adds	r0, r3, r0
+ 398              	.LVL32:
+ 399 000a 0A49     		ldr	r1, .L41+4
+ 400 000c 8842     		cmp	r0, r1
+ 143:src/syscalls.c **** 	{
+ 144:src/syscalls.c **** 			errno = ENOMEM;
+ 145:src/syscalls.c **** 			return (caddr_t) -1;
+ 146:src/syscalls.c **** 	}
+ 147:src/syscalls.c ****   
+ 148:src/syscalls.c ****   heap_ptr += incr;
+ 401              		.loc 1 148 0
+ 402 000e 98BF     		it	ls
+ 403 0010 1060     		strls	r0, [r2, #0]
+ 142:src/syscalls.c **** 	if (heap_ptr + incr > _heap_end)
+ 404              		.loc 1 142 0
+ 405 0012 01D8     		bhi	.L40
+ 149:src/syscalls.c ****   return base;
+ 150:src/syscalls.c **** }
+ 406              		.loc 1 150 0
+ 407 0014 1846     		mov	r0, r3
+ 408 0016 08BD     		pop	{r3, pc}
+ 409              	.L40:
+ 144:src/syscalls.c **** 			errno = ENOMEM;
+ 410              		.loc 1 144 0
+ 411 0018 FFF7FEFF 		bl	__errno
+ 412              	.LVL33:
+ 413 001c 0C23     		movs	r3, #12
+ 414 001e 0360     		str	r3, [r0, #0]
+ 145:src/syscalls.c **** 			return (caddr_t) -1;
+ 415              		.loc 1 145 0
+ 416 0020 4FF0FF33 		mov	r3, #-1
+ 417              		.loc 1 150 0
+ 418 0024 1846     		mov	r0, r3
+ 419 0026 08BD     		pop	{r3, pc}
+ 420              	.LVL34:
+ 421              	.L39:
+ 140:src/syscalls.c ****   if (!heap_ptr) heap_ptr = end;
+ 422              		.loc 1 140 0 discriminator 1
+ 423 0028 034B     		ldr	r3, .L41+8
+ 424 002a 1360     		str	r3, [r2, #0]
+ 425 002c ECE7     		b	.L36
+ 426              	.L42:
+ 427 002e 00BF     		.align	2
+ 428              	.L41:
+ 429 0030 00000000 		.word	.LANCHOR0
+ 430 0034 00000000 		.word	_heap_end
+ 431 0038 00000000 		.word	end
+ 432              		.cfi_endproc
+ 433              	.LFE122:
+ 435              		.section	.text._open,"ax",%progbits
+ 436              		.align	2
+ 437              		.global	_open
+ 438              		.thumb
+ 439              		.thumb_func
+ 441              	_open:
+ 442              	.LFB123:
+ 151:src/syscalls.c **** 
+ 152:src/syscalls.c **** int _open(const char *path, int flags, ...)
+ 153:src/syscalls.c **** {
+ 443              		.loc 1 153 0
+ 444              		.cfi_startproc
+ 445              		@ args = 4, pretend = 12, frame = 0
+ 446              		@ frame_needed = 0, uses_anonymous_args = 1
+ 447              		@ link register save eliminated.
+ 448              	.LVL35:
+ 449 0000 0EB4     		push	{r1, r2, r3}
+ 450              	.LCFI4:
+ 451              		.cfi_def_cfa_offset 12
+ 452              		.cfi_offset 3, -4
+ 453              		.cfi_offset 2, -8
+ 454              		.cfi_offset 1, -12
+ 154:src/syscalls.c ****   return 1;
+ 155:src/syscalls.c **** }
+ 455              		.loc 1 155 0
+ 456 0002 0120     		movs	r0, #1
+ 457              	.LVL36:
+ 458 0004 03B0     		add	sp, sp, #12
+ 459 0006 7047     		bx	lr
+ 460              		.cfi_endproc
+ 461              	.LFE123:
+ 463              		.section	.text._close,"ax",%progbits
+ 464              		.align	2
+ 465              		.global	_close
+ 466              		.thumb
+ 467              		.thumb_func
+ 469              	_close:
+ 470              	.LFB124:
+ 156:src/syscalls.c **** 
+ 157:src/syscalls.c **** int _close(int fd)
+ 158:src/syscalls.c **** {
+ 471              		.loc 1 158 0
+ 472              		.cfi_startproc
+ 473              		@ args = 0, pretend = 0, frame = 0
+ 474              		@ frame_needed = 0, uses_anonymous_args = 0
+ 475              		@ link register save eliminated.
+ 476              	.LVL37:
+ 159:src/syscalls.c ****   return 0;
+ 160:src/syscalls.c **** }
+ 477              		.loc 1 160 0
+ 478 0000 0020     		movs	r0, #0
+ 479              	.LVL38:
+ 480 0002 7047     		bx	lr
+ 481              		.cfi_endproc
+ 482              	.LFE124:
+ 484              		.section	.text._fstat,"ax",%progbits
+ 485              		.align	2
+ 486              		.global	_fstat
+ 487              		.thumb
+ 488              		.thumb_func
+ 490              	_fstat:
+ 491              	.LFB125:
+ 161:src/syscalls.c **** 
+ 162:src/syscalls.c **** int _fstat(int fd, struct stat *st)
+ 163:src/syscalls.c **** {
+ 492              		.loc 1 163 0
+ 493              		.cfi_startproc
+ 494              		@ args = 0, pretend = 0, frame = 0
+ 495              		@ frame_needed = 0, uses_anonymous_args = 0
+ 496              		@ link register save eliminated.
+ 497              	.LVL39:
+ 164:src/syscalls.c ****   st->st_mode = S_IFCHR;
+ 498              		.loc 1 164 0
+ 499 0000 4FF40053 		mov	r3, #8192
+ 500 0004 4B60     		str	r3, [r1, #4]
+ 165:src/syscalls.c ****   return 0;
+ 166:src/syscalls.c **** }
+ 501              		.loc 1 166 0
+ 502 0006 0020     		movs	r0, #0
+ 503              	.LVL40:
+ 504 0008 7047     		bx	lr
+ 505              		.cfi_endproc
+ 506              	.LFE125:
+ 508              		.section	.text._isatty,"ax",%progbits
+ 509              		.align	2
+ 510              		.global	_isatty
+ 511              		.thumb
+ 512              		.thumb_func
+ 514              	_isatty:
+ 515              	.LFB126:
+ 167:src/syscalls.c **** 
+ 168:src/syscalls.c **** int _isatty(int fd)
+ 169:src/syscalls.c **** {
+ 516              		.loc 1 169 0
+ 517              		.cfi_startproc
+ 518              		@ args = 0, pretend = 0, frame = 0
+ 519              		@ frame_needed = 0, uses_anonymous_args = 0
+ 520              		@ link register save eliminated.
+ 521              	.LVL41:
+ 170:src/syscalls.c ****   return 1;
+ 171:src/syscalls.c **** }
+ 522              		.loc 1 171 0
+ 523 0000 0120     		movs	r0, #1
+ 524              	.LVL42:
+ 525 0002 7047     		bx	lr
+ 526              		.cfi_endproc
+ 527              	.LFE126:
+ 529              		.section	.text._lseek,"ax",%progbits
+ 530              		.align	2
+ 531              		.global	_lseek
+ 532              		.thumb
+ 533              		.thumb_func
+ 535              	_lseek:
+ 536              	.LFB127:
+ 172:src/syscalls.c **** 
+ 173:src/syscalls.c **** 
+ 174:src/syscalls.c **** int _lseek(int fd, off_t pos, int whence)
+ 175:src/syscalls.c **** {
+ 537              		.loc 1 175 0
+ 538              		.cfi_startproc
+ 539              		@ args = 0, pretend = 0, frame = 0
+ 540              		@ frame_needed = 0, uses_anonymous_args = 0
+ 541              		@ link register save eliminated.
+ 542              	.LVL43:
+ 176:src/syscalls.c ****   return 0;
+ 177:src/syscalls.c **** }
+ 543              		.loc 1 177 0
+ 544 0000 0020     		movs	r0, #0
+ 545              	.LVL44:
+ 546 0002 7047     		bx	lr
+ 547              		.cfi_endproc
+ 548              	.LFE127:
+ 550              		.section	.text._read,"ax",%progbits
+ 551              		.align	2
+ 552              		.global	_read
+ 553              		.thumb
+ 554              		.thumb_func
+ 556              	_read:
+ 557              	.LFB128:
+ 178:src/syscalls.c **** 
+ 179:src/syscalls.c **** int _read(int fd, char *buf, size_t cnt)
+ 180:src/syscalls.c **** {
+ 558              		.loc 1 180 0
+ 559              		.cfi_startproc
+ 560              		@ args = 0, pretend = 0, frame = 0
+ 561              		@ frame_needed = 0, uses_anonymous_args = 0
+ 562              	.LVL45:
+ 563 0000 10B5     		push	{r4, lr}
+ 564              	.LCFI5:
+ 565              		.cfi_def_cfa_offset 8
+ 566              		.cfi_offset 14, -4
+ 567              		.cfi_offset 4, -8
+ 568              		.loc 1 180 0
+ 569 0002 0C46     		mov	r4, r1
+ 181:src/syscalls.c ****   *buf = getch();
+ 570              		.loc 1 181 0
+ 571 0004 FFF7FEFF 		bl	getch
+ 572              	.LVL46:
+ 573 0008 2070     		strb	r0, [r4, #0]
+ 182:src/syscalls.c **** 
+ 183:src/syscalls.c ****   return 1;
+ 184:src/syscalls.c **** }
+ 574              		.loc 1 184 0
+ 575 000a 0120     		movs	r0, #1
+ 576 000c 10BD     		pop	{r4, pc}
+ 577              		.cfi_endproc
+ 578              	.LFE128:
+ 580 000e 00BF     		.section	.text._write,"ax",%progbits
+ 581              		.align	2
+ 582              		.global	_write
+ 583              		.thumb
+ 584              		.thumb_func
+ 586              	_write:
+ 587              	.LFB129:
+ 185:src/syscalls.c **** 
+ 186:src/syscalls.c **** int _write(int fd, const char *buf, size_t cnt)
+ 187:src/syscalls.c **** {
+ 588              		.loc 1 187 0
+ 589              		.cfi_startproc
+ 590              		@ args = 0, pretend = 0, frame = 0
+ 591              		@ frame_needed = 0, uses_anonymous_args = 0
+ 592              	.LVL47:
+ 593 0000 70B5     		push	{r4, r5, r6, lr}
+ 594              	.LCFI6:
+ 595              		.cfi_def_cfa_offset 16
+ 596              		.cfi_offset 14, -4
+ 597              		.cfi_offset 6, -8
+ 598              		.cfi_offset 5, -12
+ 599              		.cfi_offset 4, -16
+ 600              	.LVL48:
+ 601              		.loc 1 187 0
+ 602 0002 1446     		mov	r4, r2
+ 603 0004 0E46     		mov	r6, r1
+ 188:src/syscalls.c ****   int i;
+ 189:src/syscalls.c **** 
+ 190:src/syscalls.c ****   for (i = 0; i < cnt; i++)
+ 604              		.loc 1 190 0
+ 605 0006 42B1     		cbz	r2, .L50
+ 606 0008 0023     		movs	r3, #0
+ 607 000a 1D46     		mov	r5, r3
+ 608              	.LVL49:
+ 609              	.L51:
+ 610              	.LBB5:
+ 191:src/syscalls.c ****     putch(buf[i]);
+ 611              		.loc 1 191 0 discriminator 2
+ 612 000c F056     		ldrsb	r0, [r6, r3]
+ 613              	.LBE5:
+ 190:src/syscalls.c ****   for (i = 0; i < cnt; i++)
+ 614              		.loc 1 190 0 discriminator 2
+ 615 000e 0135     		adds	r5, r5, #1
+ 616              	.LBB6:
+ 617              		.loc 1 191 0 discriminator 2
+ 618 0010 FFF7FEFF 		bl	glcd_putch
+ 619              	.LVL50:
+ 620              	.LBE6:
+ 190:src/syscalls.c ****   for (i = 0; i < cnt; i++)
+ 621              		.loc 1 190 0 discriminator 2
+ 622 0014 2B46     		mov	r3, r5
+ 623 0016 A542     		cmp	r5, r4
+ 624 0018 F8D1     		bne	.L51
+ 625              	.LVL51:
+ 626              	.L50:
+ 192:src/syscalls.c **** 
+ 193:src/syscalls.c ****   return cnt;
+ 194:src/syscalls.c **** }
+ 627              		.loc 1 194 0
+ 628 001a 2046     		mov	r0, r4
+ 629 001c 70BD     		pop	{r4, r5, r6, pc}
+ 630              		.cfi_endproc
+ 631              	.LFE129:
+ 633 001e 00BF     		.section	.bss.heap_ptr,"aw",%nobits
+ 634              		.align	2
+ 635              		.set	.LANCHOR0,. + 0
+ 638              	heap_ptr:
+ 639 0000 00000000 		.space	4
+ 640              		.text
+ 641              	.Letext0:
+ 642              		.file 3 "/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/include/stddef.h"
+ 643              		.file 4 "/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/sys/lock.h
+ 644              		.file 5 "/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/sys/_types
+ 645              		.file 6 "/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/sys/reent.
+ 646              		.file 7 "/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/sys/types.
+ 647              		.file 8 "/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/../../../../arm-m4-eabi/sys-include/sys/stat.h
+ 648              		.file 9 "/opt/stm32-tools/lib/gcc/arm-m4-eabi/4.6.2/include/stdint-gcc.h"
+ 649              		.file 10 "../STM32F4xx_DSP_StdPeriph_Lib_V1.1.0/Libraries/CMSIS/Include/core_cm4.h"
+ 650              		.file 11 "./inc/systick.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 syscalls.c
+     /tmp/cch3TrpV.s:19     .text._read_r:00000000 $t
+     /tmp/cch3TrpV.s:24     .text._read_r:00000000 _read_r
+     /tmp/cch3TrpV.s:99     .text._write_r:00000000 $t
+     /tmp/cch3TrpV.s:104    .text._write_r:00000000 _write_r
+     /tmp/cch3TrpV.s:163    .text._close_r:00000000 $t
+     /tmp/cch3TrpV.s:168    .text._close_r:00000000 _close_r
+     /tmp/cch3TrpV.s:184    .text._lseek_r:00000000 $t
+     /tmp/cch3TrpV.s:189    .text._lseek_r:00000000 _lseek_r
+     /tmp/cch3TrpV.s:205    .text._fstat_r:00000000 $t
+     /tmp/cch3TrpV.s:210    .text._fstat_r:00000000 _fstat_r
+     /tmp/cch3TrpV.s:229    .text.isatty:00000000 $t
+     /tmp/cch3TrpV.s:234    .text.isatty:00000000 isatty
+     /tmp/cch3TrpV.s:250    .text._exit:00000000 $t
+     /tmp/cch3TrpV.s:255    .text._exit:00000000 _exit
+     /tmp/cch3TrpV.s:271    .text._getpid:00000000 $t
+     /tmp/cch3TrpV.s:276    .text._getpid:00000000 _getpid
+     /tmp/cch3TrpV.s:293    .text._kill:00000000 $t
+     /tmp/cch3TrpV.s:298    .text._kill:00000000 _kill
+     /tmp/cch3TrpV.s:314    .text._sbrk_r:00000000 $t
+     /tmp/cch3TrpV.s:319    .text._sbrk_r:00000000 _sbrk_r
+     /tmp/cch3TrpV.s:366    .text._sbrk_r:00000028 $d
+     /tmp/cch3TrpV.s:373    .text._sbrk:00000000 $t
+     /tmp/cch3TrpV.s:378    .text._sbrk:00000000 _sbrk
+     /tmp/cch3TrpV.s:429    .text._sbrk:00000030 $d
+     /tmp/cch3TrpV.s:436    .text._open:00000000 $t
+     /tmp/cch3TrpV.s:441    .text._open:00000000 _open
+     /tmp/cch3TrpV.s:464    .text._close:00000000 $t
+     /tmp/cch3TrpV.s:469    .text._close:00000000 _close
+     /tmp/cch3TrpV.s:485    .text._fstat:00000000 $t
+     /tmp/cch3TrpV.s:490    .text._fstat:00000000 _fstat
+     /tmp/cch3TrpV.s:509    .text._isatty:00000000 $t
+     /tmp/cch3TrpV.s:514    .text._isatty:00000000 _isatty
+     /tmp/cch3TrpV.s:530    .text._lseek:00000000 $t
+     /tmp/cch3TrpV.s:535    .text._lseek:00000000 _lseek
+     /tmp/cch3TrpV.s:551    .text._read:00000000 $t
+     /tmp/cch3TrpV.s:556    .text._read:00000000 _read
+     /tmp/cch3TrpV.s:581    .text._write:00000000 $t
+     /tmp/cch3TrpV.s:586    .text._write:00000000 _write
+     /tmp/cch3TrpV.s:634    .bss.heap_ptr:00000000 $d
+     /tmp/cch3TrpV.s:638    .bss.heap_ptr:00000000 heap_ptr
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+getch
+glcd_putch
+__errno
+_heap_end
+end
