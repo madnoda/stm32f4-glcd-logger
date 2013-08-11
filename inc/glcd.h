@@ -7,6 +7,7 @@ void glcd_Puts_Serial(const char *buf);
 void glcd_transChar();
 void glcd_PutCharAt(uint16_t x,uint16_t y,uint16_t c);
 void glcd_PutsAt(uint16_t x,uint16_t y,const char *);
+void glcd_PutsAtINV(uint16_t x,uint16_t y,const char *);
 void glcd_Dec(uint16_t x,uint16_t y,int,int,uint8_t);
 void glcd_Hex(uint16_t x,uint16_t y,int,int32_t);
 void glcd_Vline(uint16_t i,int32_t j);

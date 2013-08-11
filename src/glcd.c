@@ -467,6 +467,16 @@ void glcd_PutsAt(uint16_t x,uint16_t y,const char *buf)
 	}
 }
 
+void glcd_PutsAtINV(uint16_t x,uint16_t y,const char *buf)
+{
+	int i=0;
+	while(buf[i]) {
+		glcd_PutCharAt(x,y,buf[i]);
+		i++;
+		x += 8;
+	}
+}
+
 void glcd_Vline(uint16_t x,int32_t d)
 {
 	int i,p;

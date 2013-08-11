@@ -91,6 +91,9 @@ uint8_t getData(void)
 uint16_t divMS = 5;
 uint16_t divC = 1;
 
+void putdaSD(uint8_t,uint8_t,uint8_t,uint8_t);
+extern uint8_t flgDATAKIND;
+
 void getDataHandler(void)
 {
 	static uint16_t c = 1;
@@ -118,6 +121,8 @@ void getDataHandler(void)
 		fifoa3[fifo_in] = ADC_GetConversionValue(ADC3) & 0x00ff;
 		ADC_SoftwareStartConv(ADC3);
 	}
+	if (flgDATAKIND == 0)
+		putdaSD(fifo[fifo_in],fifoa1[fifo_in],fifoa2[fifo_in],fifoa3[fifo_in]);
 	fifo_in++;
 	if (fifo_in >= 2000)
 		fifo_in = 0;
@@ -198,6 +203,26 @@ FATFS *fs;  /* Pointer to file system object */
 #if _USE_LFN
 char Lfname[512];
 #endif
+char OutPutFName[32];
+char TmpOutPutFName[32];
+uint8_t flgSAVING = 0;
+
+void getOutPutFName(char * fn,UINT n)
+{ 
+	fn[0] = 'd';
+	fn[1] = 'a';
+	fn[2] = 't';
+	fn[3] = 'a';
+	fn[4] = '0' + (n / 1000) % 10;
+	fn[5] = '0' + (n / 100) % 10;
+	fn[6] = '0' + (n / 10) % 10;
+	fn[7] = '0' + (n / 1) % 10;
+	fn[8] = '.';
+	fn[9] = 't';
+	fn[10] = 'x';
+	fn[11] = 't';
+	fn[12] = 0;
+}
 
 uint32_t get_fattime (void)
 {
@@ -452,7 +477,8 @@ FRESULT lsSD()
 
 FIL file;
 #define FBUF_SIZE 512		// SDカードへ書き込むためのバッファサイズ
-#define RING_BUF_SIZE 8
+// #define RING_BUF_SIZE 48
+#define RING_BUF_SIZE 32
 uint8_t ring_buffer[RING_BUF_SIZE][FBUF_SIZE];
 volatile uint8_t ring_buffer_p_in  = 0;
 volatile uint8_t ring_buffer_p_out = 0;
@@ -463,6 +489,33 @@ void putcSD(uint8_t data)
 {
 	ring_buffer[ring_buffer_p_in][pBuf] = data;
 	pBuf++;
+	if (pBuf >= FBUF_SIZE) {
+		pBuf = 0;
+		ring_buffer_p_in ++;
+		if (ring_buffer_p_in >= RING_BUF_SIZE) {
+			ring_buffer_p_in = 0;
+		}
+	}
+}
+
+void putdaSD(uint8_t data0,uint8_t data1,uint8_t data2,uint8_t data3)
+{
+	if (pBuf == 0) {
+		RTC_GetTime(RTC_Format_BIN, &RTC_TimeStructure);  
+		RTC_GetDate(RTC_Format_BIN, &RTC_DateStructure);
+		ring_buffer[ring_buffer_p_in][pBuf++] = ts_year;
+		ring_buffer[ring_buffer_p_in][pBuf++] = ts_mon;
+		ring_buffer[ring_buffer_p_in][pBuf++] = ts_mday;
+		ring_buffer[ring_buffer_p_in][pBuf++] = ts_hour;
+		ring_buffer[ring_buffer_p_in][pBuf++] = ts_min;
+		ring_buffer[ring_buffer_p_in][pBuf++] = ts_sec;
+		while (pBuf < 12)
+			ring_buffer[ring_buffer_p_in][pBuf++] = 0;
+	}
+	ring_buffer[ring_buffer_p_in][pBuf++] = data0;
+	ring_buffer[ring_buffer_p_in][pBuf++] = data1;
+	ring_buffer[ring_buffer_p_in][pBuf++] = data2;
+	ring_buffer[ring_buffer_p_in][pBuf++] = data3;
 	if (pBuf >= FBUF_SIZE) {
 		pBuf = 0;
 		ring_buffer_p_in ++;
@@ -487,18 +540,24 @@ char output_str[1536];
 int flgChangeGLCD = 0;
 
 uint8_t psw;
-enum eDISP_STATUS { LOGICIN, ANALOGIN, SERIALIN, CLOCKSETTING };
+enum eDISP_STATUS { LOGICIN, ANALOGIN, SERIALIN, SETTING };
 enum eDISP_STATUS disp_status = LOGICIN;
 uint8_t flgTRIG = 1;
 
 uint16_t tmp_year;
 uint8_t tmp_mon,tmp_day;
 uint8_t tmp_hour,tmp_min,tmp_sec;
-uint8_t cs;
+enum eSETTING_STATUS { SET_DATA_KIND,START_SAVE,SET_YEAR, SET_MON, SET_DAY, SET_HOUR, SET_MIN, SET_SEC,CLOCKSET };
+//enum eSETTING_STATUS { SET_DIGITAL,SET_ANALOG,SET_SERIAL,START_SAVE,SET_YEAR, SET_MON, SET_DAY, SET_HOUR, SET_MIN, SET_SEC,CLOCKSET };
+enum eSETTING_STATUS setting_status = SET_DATA_KIND;
+
+uint8_t flgDATAKIND = 1;
+uint8_t tmp_flgDATAKIND = 0;
 
 #ifdef SERIAL_DEBUG
 int serial_debug_c = 0;
 #endif
+
 
 int main(void)
 {
@@ -543,24 +602,10 @@ int main(void)
 		_delay_ms(100);
 	}
 	if ((!initSD()) && (lsSD() == FR_OK)) {
-		Lfname[0] = 'd';
-		Lfname[1] = 'a';
-		Lfname[2] = 't';
-		Lfname[3] = 'a';
-		Lfname[4] = '0' + (nTextFile / 1000) % 10;
-		Lfname[5] = '0' + (nTextFile / 100) % 10;
-		Lfname[6] = '0' + (nTextFile / 10) % 10;
-		Lfname[7] = '0' + (nTextFile / 1) % 10;
-		Lfname[8] = '.';
-		Lfname[9] = 't';
-		Lfname[10] = 'x';
-		Lfname[11] = 't';
-		Lfname[12] = 0;
+		getOutPutFName(OutPutFName,nTextFile);
 		glcd_Puts(" Output Filename :");
-		glcd_Puts(Lfname);
+		glcd_Puts(OutPutFName);
 		glcd_Puts("\r\n\r\n");
-		f_open(&file,Lfname,FA_CREATE_ALWAYS | FA_WRITE);
-		f_close(&file);
 		flgSDcard = 1;
 		ring_buffer_p_in  = 0;
 		ring_buffer_p_out = 0;
@@ -600,208 +645,371 @@ int main(void)
 		_delay_ms(10);
 		psw |= pushSW();
 
-		if (psw & 0x01) {
-			disp_status ++;
-			if (disp_status > CLOCKSETTING) {
-				disp_status = LOGICIN;
-			}
-			if (disp_status == SERIALIN) {
-				glcd_BufClear(1);
-				glcd_x = 0;
-				glcd_y = 0;
-				flgUpdate = 0;
-			}
-			if (disp_status == CLOCKSETTING) {
-				RTC_GetTime(RTC_Format_BIN, &RTC_TimeStructure);  
-				RTC_GetDate(RTC_Format_BIN, &RTC_DateStructure);
-				tmp_year=2000+ts_year;
-				tmp_mon=ts_mon;
-				tmp_day=ts_mday;
-				tmp_hour=ts_hour;
-				tmp_min=ts_min;
-				tmp_sec=ts_sec;
-				cs = 0;
-			}
-		} else if (psw & 0x02) {
-			if ((disp_status == LOGICIN) || (disp_status == ANALOGIN)) {
-				flgTRIG ++;
-				if (flgTRIG > 2)
-					flgTRIG = 0;
-			} else 
-			if (disp_status == CLOCKSETTING) {
-				cs ++;
-				if (cs >= 6) {
-					cs = 0;
+		switch (disp_status) {
+			case LOGICIN:
+				if (psw & 0x01) {
+					disp_status ++;
+				} else if (psw & 0x02) {
+					flgTRIG ++;
+					if (flgTRIG > 2)
+						flgTRIG = 0;
+				} else if (psw & 0x04) {
+					switch (divMS) {
+						case 5:
+							break;
+						case 10:
+							divMS = 5;
+							divC = 1;
+							fifo_clear();
+							break;
+						case 20:
+							divMS = 10;
+							divC = 2;
+							fifo_clear();
+							break;
+						case 50:
+							divMS = 20;
+							divC = 4;
+							fifo_clear();
+							break;
+						case 100:
+	
+							divMS = 50;
+							divC = 10;
+							fifo_clear();
+							break;
+						case 200:
+							divMS = 100;
+							divC = 20;
+							fifo_clear();
+							break;
+						case 500:
+							divMS = 200;
+							divC = 40;
+							fifo_clear();
+							break;
+						case 1000:
+							divMS = 500;
+							divC = 100;
+							fifo_clear();
+							break;
+					}
+				} else if (psw & 0x08) {
+					switch (divMS) {
+						case 5:
+							divMS = 10;
+							divC = 2;
+							fifo_clear();
+							break;
+						case 10:
+							divMS = 20;
+							divC = 4;
+							fifo_clear();
+							break;
+						case 20:
+							divMS = 50;
+							divC = 10;
+							fifo_clear();
+							break;
+						case 50:
+							divMS = 100;
+							divC = 20;
+							fifo_clear();
+							break;
+						case 100:
+							divMS = 200;
+							divC = 40;
+							fifo_clear();
+							break;
+						case 200:
+							divMS = 500;
+							divC = 100;
+							fifo_clear();
+							break;
+						case 500:
+							divMS = 1000;
+							divC = 200;
+							fifo_clear();
+							break;
+						case 1000:
+							break;
+					}
+				} else if (psw & 0x80) {
 				}
-			} 
-		} else if (psw & 0x04) {
-			if ((disp_status == LOGICIN) || (disp_status == ANALOGIN)) {
-				switch (divMS) {
-					case 5:
-						break;
-					case 10:
-						divMS = 5;
-						divC = 1;
-						fifo_clear();
-						break;
-					case 20:
-						divMS = 10;
-						divC = 2;
-						fifo_clear();
-						break;
-					case 50:
-						divMS = 20;
-						divC = 4;
-						fifo_clear();
-						break;
-					case 100:
-						divMS = 50;
-						divC = 10;
-						fifo_clear();
-						break;
-					case 200:
-						divMS = 100;
-						divC = 20;
-						fifo_clear();
-						break;
-					case 500:
-						divMS = 200;
-						divC = 40;
-						fifo_clear();
-						break;
-					case 1000:
-						divMS = 500;
-						divC = 100;
-						fifo_clear();
-						break;
+				break;
+			case ANALOGIN:
+				if (psw & 0x01) {
+					disp_status ++;
+					glcd_BufClear(1);
+					glcd_x = 0;
+					glcd_y = 0;
+					flgUpdate = 0;
+				} else if (psw & 0x02) {
+					flgTRIG ++;
+					if (flgTRIG > 2)
+						flgTRIG = 0;
+				} else if (psw & 0x04) {
+					switch (divMS) {
+						case 5:
+							break;
+						case 10:
+							divMS = 5;
+							divC = 1;
+							fifo_clear();
+							break;
+						case 20:
+							divMS = 10;
+							divC = 2;
+							fifo_clear();
+							break;
+						case 50:
+							divMS = 20;
+							divC = 4;
+							fifo_clear();
+							break;
+						case 100:
+							divMS = 50;
+							divC = 10;
+							fifo_clear();
+							break;
+						case 200:
+							divMS = 100;
+							divC = 20;
+							fifo_clear();
+							break;
+						case 500:
+							divMS = 200;
+							divC = 40;
+							fifo_clear();
+							break;
+						case 1000:
+							divMS = 500;
+							divC = 100;
+							fifo_clear();
+							break;
+					}
+				} else if (psw & 0x08) {
+					switch (divMS) {
+						case 5:
+							divMS = 10;
+							divC = 2;
+							fifo_clear();
+							break;
+						case 10:
+							divMS = 20;
+							divC = 4;
+							fifo_clear();
+							break;
+						case 20:
+							divMS = 50;
+							divC = 10;
+							fifo_clear();
+							break;
+						case 50:
+							divMS = 100;
+							divC = 20;
+							fifo_clear();
+							break;
+						case 100:
+							divMS = 200;
+							divC = 40;
+							fifo_clear();
+							break;
+						case 200:
+							divMS = 500;
+							divC = 100;
+							fifo_clear();
+							break;
+						case 500:
+							divMS = 1000;
+							divC = 200;
+							fifo_clear();
+							break;
+						case 1000:
+							break;
+					}
 				}
-			} else if (disp_status == CLOCKSETTING) {
-				switch (cs) {
-					case 0:
-						tmp_year --;
-						break;
-					case 1:
-						tmp_mon --;
-						if(tmp_mon == 0) {
-							tmp_mon = 12;
-						}
-						break;
-					case 2:
-						tmp_day --;
-						if(tmp_day == 0) {
-							tmp_day = 31;
-						}
-						break;
-					case 3:
-						if(tmp_hour == 0) {
-							tmp_hour =23;
-						} else {
-							tmp_hour --;
-						}
-						break;
-					case 4:
-						if(tmp_min == 0) {
-							tmp_min =59;
-						} else {
-							tmp_min --;
-						}
-						break;
-					case 5:
-						if(tmp_sec == 0) {
-							tmp_sec =59;
-						} else {
-							tmp_sec --;
-						}
-						break;
+				break;
+			case SERIALIN:
+				if (psw & 0x01) {
+					disp_status ++;
+					tmp_flgDATAKIND = flgDATAKIND;
+					RTC_GetTime(RTC_Format_BIN, &RTC_TimeStructure);  
+					RTC_GetDate(RTC_Format_BIN, &RTC_DateStructure);
+					tmp_year=2000+ts_year;
+					tmp_mon=ts_mon;
+					tmp_day=ts_mday;
+					tmp_hour=ts_hour;
+					tmp_min=ts_min;
+					tmp_sec=ts_sec;
+					if (flgSDcard) {
+						setting_status = SET_DATA_KIND;
+					} else {
+						setting_status = SET_YEAR;
+					}
 				}
-			}
-		} else if (psw & 0x08) {
-			if ((disp_status == LOGICIN) || (disp_status == ANALOGIN)) {
-				switch (divMS) {
-					case 5:
-						divMS = 10;
-						divC = 2;
-						fifo_clear();
-						break;
-					case 10:
-						divMS = 20;
-						divC = 4;
-						fifo_clear();
-						break;
-					case 20:
-						divMS = 50;
-						divC = 10;
-						fifo_clear();
-						break;
-					case 50:
-						divMS = 100;
-						divC = 20;
-						fifo_clear();
-						break;
-					case 100:
-						divMS = 200;
-						divC = 40;
-						fifo_clear();
-						break;
-					case 200:
-						divMS = 500;
-						divC = 100;
-						fifo_clear();
-						break;
-					case 500:
-						divMS = 1000;
-						divC = 200;
-						fifo_clear();
-						break;
-					case 1000:
-						break;
+				break;
+			case SETTING:
+				if (psw & 0x01) {
+					disp_status = LOGICIN;
+				} else if (psw & 0x04) {
+					if (flgSDcard) {
+						if (setting_status == SET_DATA_KIND) {
+							setting_status = CLOCKSET;
+						} else {
+							setting_status --;
+						}
+					} else {
+						if (setting_status == SET_YEAR) {
+							setting_status = CLOCKSET;
+						} else {
+							setting_status --;
+						}
+					}
+				} else if (psw & 0x08) {
+					if (setting_status == CLOCKSET) {
+						if (flgSDcard) {
+							setting_status = SET_DATA_KIND;
+						} else {
+							setting_status = SET_YEAR;
+						}
+					} else {
+						setting_status ++;
+					}
+				} else if (psw & 0x10) {
+					switch (setting_status) {
+						case SET_DATA_KIND:
+							if (tmp_flgDATAKIND) {
+								tmp_flgDATAKIND = 0;
+							} else {
+								tmp_flgDATAKIND = 1;
+							}
+							break;
+						case SET_YEAR:
+							tmp_year --;
+							break;
+						case SET_MON:
+							tmp_mon --;
+							if(tmp_mon == 0) {
+								tmp_mon = 12;
+							}
+							break;
+						case SET_DAY:
+							tmp_day --;
+							if(tmp_day == 0) {
+								tmp_day = 31;
+							}
+							break;
+						case SET_HOUR:
+							if(tmp_hour == 0) {
+								tmp_hour =23;
+							} else {
+								tmp_hour --;
+							}
+							break;
+						case SET_MIN:
+							if(tmp_min == 0) {
+								tmp_min =59;
+							} else {
+								tmp_min --;
+							}
+							break;
+						case SET_SEC:
+							if(tmp_sec == 0) {
+								tmp_sec =59;
+							} else {
+								tmp_sec --;
+							}
+							break;
+					}
+				} else if (psw & 0x20) {
+					switch (setting_status) {
+						case SET_DATA_KIND:
+							if (tmp_flgDATAKIND) {
+								tmp_flgDATAKIND = 0;
+							} else {
+								tmp_flgDATAKIND = 1;
+							}
+							break;
+						case SET_YEAR:
+							tmp_year ++;
+							break;
+						case SET_MON:
+							tmp_mon ++;
+							if(tmp_mon == 13) {
+								tmp_mon = 1;
+							}
+							break;
+						case SET_DAY:
+							tmp_day ++;
+							if(tmp_day == 32) {
+								tmp_day = 1;
+							}
+							break;
+						case SET_HOUR:
+							if(tmp_hour == 23) {
+								tmp_hour = 0;
+							} else {
+								tmp_hour ++;
+							}
+							break;
+						case SET_MIN:
+							if(tmp_min == 59) {
+								tmp_min = 0;
+							} else {
+								tmp_min ++;
+							}
+							break;
+						case SET_SEC:
+							if(tmp_sec == 59) {
+								tmp_sec = 0;
+							} else {
+								tmp_sec ++;
+							}
+							break;
+					}
+				} else if (psw & 0x80) {
+					if (setting_status == START_SAVE) {
+						n = ring_buffer_p_in - ring_buffer_p_out;
+						if (flgSAVING == 0) {
+							flgDATAKIND = tmp_flgDATAKIND;
+							getOutPutFName(OutPutFName,nTextFile);
+							f_open(&file,OutPutFName,FA_CREATE_ALWAYS | FA_WRITE);
+							f_close(&file);
+							flgSAVING = 1;
+							ring_buffer_p_in  = 0;
+							ring_buffer_p_out = 0;
+							pBuf = 0;
+						} else if ((flgSAVING) && (n > 0)) {
+							f_open(&file,OutPutFName,FA_READ|FA_WRITE);
+							f_lseek(&file,f_size(&file));
+							while (n > 0) {
+								if (ring_buffer_p_out + n < RING_BUF_SIZE) {
+									f_write (&file,ring_buffer[ring_buffer_p_out],n * FBUF_SIZE,&fbuflen);
+									ring_buffer_p_out += n;
+									n = 0;
+								} else {
+									f_write (&file,ring_buffer[ring_buffer_p_out],(RING_BUF_SIZE - ring_buffer_p_out) * FBUF_SIZE,&fbuflen);
+									n -= (RING_BUF_SIZE - ring_buffer_p_out);
+									ring_buffer_p_out = 0;	
+								}
+							}
+							f_close(&file);
+							flgSAVING = 0;
+							nTextFile++;
+						} else {
+							flgSAVING = 0;
+							nTextFile++;
+						}
+					}
+					if (setting_status == CLOCKSET) {
+						RTC_Configuration(1);
+						set_RTC(tmp_year,tmp_mon,tmp_day,tmp_hour,tmp_min,tmp_sec);
+					}
 				}
-			}else if (disp_status == CLOCKSETTING) {
-				switch (cs) {
-					case 0:
-						tmp_year ++;
-						break;
-					case 1:
-						tmp_mon ++;
-						if(tmp_mon == 13) {
-							tmp_mon = 1;
-						}
-						break;
-					case 2:
-						tmp_day ++;
-						if(tmp_day == 32) {
-							tmp_day = 1;
-						}
-						break;
-					case 3:
-						if(tmp_hour == 23) {
-							tmp_hour = 0;
-						} else {
-							tmp_hour ++;
-						}
-						break;
-					case 4:
-						if(tmp_min == 59) {
-							tmp_min = 0;
-						} else {
-							tmp_min ++;
-						}
-						break;
-					case 5:
-						if(tmp_sec == 59) {
-							tmp_sec = 0;
-						} else {
-							tmp_sec ++;
-						}
-						break;
-				}
-			} 
-		} else if (psw & 0x80) {
-			if (disp_status == CLOCKSETTING) {
-				RTC_Configuration(1);
-				set_RTC(tmp_year,tmp_mon,tmp_day,tmp_hour,tmp_min,tmp_sec);
-			}
+				break;
 		}
+
 		if (disp_status != SERIALIN) {
 			glcd_BufClear(1);
 		}
@@ -885,73 +1093,6 @@ int main(void)
 					t++;
 					if (t >= 2000) t = 0;
 				}
-/*
-				RTC_GetTime(RTC_Format_BIN, &RTC_TimeStructure);  
-				RTC_GetDate(RTC_Format_BIN, &RTC_DateStructure);
-				glcd_Dec(120,94,4,2000+ts_year,1);
-				glcd_PutCharAt(120+8*4,94,0x8000|'/');
-				glcd_Dec(120+8*5,94,2,ts_mon,1);
-				glcd_PutCharAt(120+8*7,94,0x8000|'/');
-				glcd_Dec(120+8*8,94,2,ts_mday,1);
-				glcd_PutCharAt(120+8*10,94,0x8000|' ');
-				glcd_Dec(120+8*11,94,2,ts_hour,1);
-				glcd_PutCharAt(120+8*13,94,0x8000|':');
-				glcd_Dec(120+8*14,94,2,ts_min,1);
-				glcd_PutCharAt(120+8*16,94,0x8000|':');
-				glcd_Dec(120+8*17,94,2,ts_sec,1);
-				glcd_Dec(120,110,3,RCC_GetFlagStatus(RCC_FLAG_LSERDY),1);
-				glcd_Hex(120,126,8,bv);
-				if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_7)) {
-					glcd_PutCharAt(16*1,142,0x8000|'X');
-				} else {
-					glcd_PutCharAt(16*1,142,0x8000|'O');
-				}
-				if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_4)) {
-					glcd_PutCharAt(16*2,142,0x8000|'X');
-				} else {
-					glcd_PutCharAt(16*2,142,0x8000|'O');
-				}
-				if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_0)) {
-					glcd_PutCharAt(16*3,142,0x8000|'X');
-				} else {
-					glcd_PutCharAt(16*3,142,0x8000|'O');
-				}
-				if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_14)) {
-					glcd_PutCharAt(16*4,142,0x8000|'X');
-				} else {
-					glcd_PutCharAt(16*4,142,0x8000|'O');
-				}
-				if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_12)) {
-					glcd_PutCharAt(16*5,142,0x8000|'X');
-				} else {
-					glcd_PutCharAt(16*5,142,0x8000|'O');
-				}
-				if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_10)) {
-					glcd_PutCharAt(16*6,142,0x8000|'X');
-				} else {
-					glcd_PutCharAt(16*6,142,0x8000|'O');
-				}
-				if (GPIO_ReadInputDataBit(GPIOE, GPIO_Pin_14)) {
-					glcd_PutCharAt(16*7,142,0x8000|'X');
-				} else {
-					glcd_PutCharAt(16*7,142,0x8000|'O');
-				}
-				if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_3)) {
-					glcd_PutCharAt(16*8,142,0x8000|'X');
-				} else {
-					glcd_PutCharAt(16*8,142,0x8000|'O');
-				}
-*/
-/*
-				while(ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC) == RESET);
-				while(ADC_GetFlagStatus(ADC2, ADC_FLAG_EOC) == RESET);
-				adc1 = ADC_GetConversionValue(ADC1) & 0x0fff;
-				adc2 = ADC_GetConversionValue(ADC2) & 0x0fff;
-				glcd_Hex(120,158,4,adc1);
-				glcd_Hex(160,158,4,adc2);
-				ADC_SoftwareStartConv(ADC1);
-				ADC_SoftwareStartConv(ADC2);
-*/
 				break;
 
 			case ANALOGIN:
@@ -1015,39 +1156,86 @@ int main(void)
 				break;
 			case SERIALIN:
 				break;
-			case CLOCKSETTING:
-				glcd_PutsAt(48,70,"Clock setting");
+			case SETTING:
+				glcd_PutsAt(48,30,"SETTING");
+				if (flgSDcard) {
+					glcd_PutsAt(64,46,"SD CARD:");
+					if (flgSAVING) {
+						glcd_PutsAt(128,46,"NOW SAVING:");
+						glcd_PutsAt(216,46,OutPutFName);
+					} else {
+						glcd_PutsAt(128,46,"NOT SAVING");
+					}
+					glcd_PutsAt(128,62,"SAVEDATA DATA:");
+					if (setting_status == SET_DATA_KIND) {
+						if (tmp_flgDATAKIND == 0) {
+							glcd_PutsAtINV(248,62,"DIGTAL & ANALOG");
+						} else {
+							glcd_PutsAtINV(248,62,"SERIAL");
+						}
+					} else {
+						if (tmp_flgDATAKIND == 0) {
+							glcd_PutsAt(248,62,"DIGTAL & ANALOG");
+						} else {
+							glcd_PutsAt(248,62,"SERIAL");
+						}
+					}
+					if (flgSAVING) {
+						if (setting_status == START_SAVE) {
+							glcd_PutsAtINV(128,78,"STOP SAVE FILE");
+						} else {
+							glcd_PutsAt(128,78,"STOP SAVE FILE");
+						}
+					} else {
+						getOutPutFName(TmpOutPutFName,nTextFile);
+						if (setting_status == START_SAVE) {
+							glcd_PutsAtINV(128,78,"START SAVE FILE:");
+							glcd_PutsAtINV(256,78,TmpOutPutFName);
+						} else {
+							glcd_PutsAt(128,78,"START SAVE FILE:");
+							glcd_PutsAt(256,78,TmpOutPutFName);
+						}
+					}
+				} else {
+					glcd_PutsAt(64,62,"NO SD Card!!");
+				}
 				RTC_GetTime(RTC_Format_BIN, &RTC_TimeStructure);  
 				RTC_GetDate(RTC_Format_BIN, &RTC_DateStructure);
-				glcd_Dec(120,94,4,2000+ts_year,1);
-				glcd_PutCharAt(120+8*4,94,0x8000|'/');
-				glcd_Dec(120+8*5,94,2,ts_mon,1);
-				glcd_PutCharAt(120+8*7,94,0x8000|'/');
-				glcd_Dec(120+8*8,94,2,ts_mday,1);
-				glcd_PutCharAt(120+8*10,94,0x8000|' ');
-				glcd_Dec(120+8*11,94,2,ts_hour,1);
-				glcd_PutCharAt(120+8*13,94,0x8000|':');
-				glcd_Dec(120+8*14,94,2,ts_min,1);
-				glcd_PutCharAt(120+8*16,94,0x8000|':');
-				glcd_Dec(120+8*17,94,2,ts_sec,1);
-				glcd_Dec(120,110,4,tmp_year,cs != 0);
-				glcd_PutCharAt(120+8*4,110,0x8000|'/');
-				glcd_Dec(120+8*5,110,2,tmp_mon,cs != 1);
-				glcd_PutCharAt(120+8*7,110,0x8000|'/');
-				glcd_Dec(120+8*8,110,2,tmp_day,cs != 2);
-				glcd_PutCharAt(120+8*10,110,0x8000|' ');
-				glcd_Dec(120+8*11,110,2,tmp_hour,cs != 3);
-				glcd_PutCharAt(120+8*13,110,0x8000|':');
-				glcd_Dec(120+8*14,110,2,tmp_min,cs != 4);
-				glcd_PutCharAt(120+8*16,110,0x8000|':');
-				glcd_Dec(120+8*17,110,2,tmp_sec,cs != 5);
+				glcd_Dec(88,110,4,2000+ts_year,1);
+				glcd_PutCharAt(88+8*4,110,0x8000|'/');
+				glcd_Dec(88+8*5,110,2,ts_mon,1);
+				glcd_PutCharAt(88+8*7,110,0x8000|'/');
+				glcd_Dec(88+8*8,110,2,ts_mday,1);
+				glcd_PutCharAt(88+8*10,110,0x8000|' ');
+				glcd_Dec(88+8*11,110,2,ts_hour,1);
+				glcd_PutCharAt(88+8*13,110,0x8000|':');
+				glcd_Dec(88+8*14,110,2,ts_min,1);
+				glcd_PutCharAt(88+8*16,110,0x8000|':');
+				glcd_Dec(88+8*17,110,2,ts_sec,1);
+				glcd_Dec(88,126,4,tmp_year,setting_status != SET_YEAR);
+				glcd_PutCharAt(88+8*4,126,0x8000|'/');
+				glcd_Dec(88+8*5,126,2,tmp_mon,setting_status != SET_MON);
+				glcd_PutCharAt(88+8*7,126,0x8000|'/');
+				glcd_Dec(88+8*8,126,2,tmp_day,setting_status != SET_DAY);
+				glcd_PutCharAt(88+8*10,126,0x8000|' ');
+				glcd_Dec(88+8*11,126,2,tmp_hour,setting_status != SET_HOUR);
+				glcd_PutCharAt(88+8*13,126,0x8000|':');
+				glcd_Dec(88+8*14,126,2,tmp_min,setting_status != SET_MIN);
+				glcd_PutCharAt(88+8*16,126,0x8000|':');
+				glcd_Dec(88+8*17,126,2,tmp_sec,setting_status != SET_SEC);
+				if (setting_status == CLOCKSET) {
+					glcd_PutsAtINV(88+8*20,126,"CLOCK SET");
+				} else {
+					glcd_PutsAt(88+8*20,126,"CLOCK SET");
+				}
 			default:
 				break;
 		}
 		input_k++;
 		while((input_p < 1000) && ((c = getch_p16(UART_DEFAULT_NUM)) != 0xffff)){
 			if (flgChangeGLCD == 0) flgChangeGLCD = 2;
-			putcSD(c);
+			if (flgDATAKIND)
+				putcSD(c);
 			input_str[input_p++] = c;
 			if ((c == '\r') || (c == '\n')) {
 				if (disp_status == SERIALIN) {
@@ -1125,10 +1313,11 @@ int main(void)
 			input_p = 0;
 
 		if (flgSDcard) {
-			if (input_k > 100) { // 10 秒以上シリアル入力が無い時
-				while(pBuf) putcSD('\n');
-				input_k = 0;
-			}
+			if (flgDATAKIND)
+				if (input_k > 100) { // 10 秒以上シリアル入力が無い時
+					while(pBuf) putcSD('\n');
+					input_k = 0;
+				}
 			n = ring_buffer_p_in - ring_buffer_p_out;
 			if (n < 0) {
 				n += RING_BUF_SIZE;
@@ -1138,9 +1327,9 @@ int main(void)
 				n -= 1;
 			}
 */
-			if (((input_k > 0) && (n > 0)) || (n > (RING_BUF_SIZE - 2))) {
+			if ((flgSAVING) && (((input_k > 0) && (n > 0)) || (n > (RING_BUF_SIZE - 2)))) {
 
-				f_open(&file,Lfname,FA_READ|FA_WRITE);
+				f_open(&file,OutPutFName,FA_READ|FA_WRITE);
 				f_lseek(&file,f_size(&file));
 				while (n > 0) {
 					if (ring_buffer_p_out + n < RING_BUF_SIZE) {
